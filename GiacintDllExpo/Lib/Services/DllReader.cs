@@ -69,6 +69,34 @@ namespace GiacintDllExpo.Lib.Services
         {
             Debug.Info(JsonConvert.SerializeObject(method, Formatting.Indented).Trim('{', '}'));
         }
+        internal static void ReadThree(DLL dll)
+        {
+            Debug.Success($"{dll.FullName} Three");
+            foreach (var type in dll.Asm.MainModule.Types)
+            {
+                Debug.Info($"\t(Type) {type.FullName} : {type.Name}");
+                foreach(var param in type.GenericParameters)
+                {
+                    Debug.Info($"\t\t(GenericParameter) {param.Name}");
+                }
+                foreach (var field in type.Fields)
+                {
+                    Debug.Info($"\t\t(Field) {field.FullName} : {field.Name}");
+                }
+                foreach (var property in type.Properties)
+                {
+                    Debug.Info($"\t\t(Property) {property.FullName} : {property.Name}");
+                }
+                foreach (var @event in type.Events)
+                {
+                    Debug.Info($"\t\t(Event) {@event.FullName} : {@event.Name}");
+                }
+                foreach (var method in type.Methods)
+                {
+                    Debug.Info($"\t\t(Method) {method.FullName} : {method.Name}");
+                }
+            }
+        }
 
         internal async static Task<string?> ReadInstructions(MethodDefinition method)
         {

@@ -129,26 +129,33 @@ internal class Program
                         if (args[1] == "-name")
                         {
                             currentTypes = new TypeDefinition[1];
-                            currentTypes[0] = currentDll.Asm.MainModule.Types.Where(s => s.FullName == args[2]).First();
+                            currentTypes[0] = currentDll.Asm.MainModule.Types.SingleOrDefault(s => s.FullName == args[2]);
                             if (currentTypes[0] == null)
                                 Debug.Warning("Type not finded");
+                            else
+                                Debug.Success($"Selected type: {currentTypes[0].FullName}");
                         }
                         else if (args[1] == "-ns")
                         {
                             currentTypes = currentDll.Asm.MainModule.Types.Where(s => s.Namespace == args[2]).ToArray();
                             if (currentTypes.Length == 0)
                                 Debug.Warning("Type not finded");
-                            Debug.Info($"Finded {currentTypes.Length} types");
+                            else
+                                foreach (var type in currentTypes)
+                                    Debug.Success($"Selected type: {type.FullName}");
+                            Debug.Info($"Total selected {currentTypes.Length} types");
                         }
                         else
                         {
                             Debug.Warning("Invalid syntax");
                         }
-                            break;
+                        break;
                     case "-methodselect":
                     case "-ms":
                         if (args.Length < 3)
                             Debug.Warning("Minimal args count is 2!");
+
+                        var full = StringHelper.PathFromArgs(args, 1);
 
                         if (currentTypes == null || currentTypes.Length == 0)
                         {
@@ -157,13 +164,13 @@ internal class Program
                         }
                         if (args[1] == "-name")
                         {
-                            currentMethod = currentTypes.First().Methods.Where(s => s.FullName == args[2]).FirstOrDefault();
+                            currentMethod = currentTypes.First().Methods.First(s => s.Name == full);
                             if (currentMethod == null)
                                 Debug.Warning("Method not finded");
                         }
                         else if (args[1] == "-type")
                         {
-                            currentMethod = currentTypes.First().Methods.Where(s => s.ReturnType.ToString() == args[2]).FirstOrDefault();
+                            currentMethod = currentTypes.First().Methods.Where(s => s.ReturnType.ToString() == full).FirstOrDefault();
                             if (currentMethod == null)
                                 Debug.Warning("Method not finded");
                         }
@@ -243,6 +250,25 @@ internal class Program
                                 }
                             }
                         }
+                        break;
+                    case "--three":
+                    case "-three":
+                        if (currentDll.Equals(null))
+                            Debug.Warning("Please select DLL");
+
+                        DllReader.ReadThree(currentDll);
+                        break;
+                    case "--clear":
+                    case "-c":
+                        Console.Clear();
+                        MainMessage();
+                        break;
+                    case "--reset":
+                    case "-rst":
+                        currentDll = new();
+                        currentTypes = null;
+                        currentMethod = null;
+                        Debug.Success("App reseted!");
                         break;
                     case "--exit":
                     case "-e":
