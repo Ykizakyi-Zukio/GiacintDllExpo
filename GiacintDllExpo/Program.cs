@@ -3,13 +3,14 @@ using Mono.Cecil;
 using GiacintDllExpo.Lib.Data;
 using GiacintDllExpo.Lib.Services;
 using Newtonsoft.Json;
+using Mono.Cecil.Cil;
 
 namespace GiacintDllExpo;
 
 internal class Program
 {
     private DLL currentDll;
-    private TypeDefinition[]? currentTypes;
+    private TypeDefinition[] currentTypes;
     private MethodDefinition? currentMethod;
 
     private static void Main(string[] args)
@@ -129,7 +130,7 @@ internal class Program
                         if (args[1] == "-name")
                         {
                             currentTypes = new TypeDefinition[1];
-                            currentTypes[0] = currentDll.Asm.MainModule.Types.SingleOrDefault(s => s.FullName == args[2]);
+                            currentTypes[0] = currentDll.Asm.MainModule.Types.FirstOrDefault(s => s.FullName == args[2]);
                             if (currentTypes[0] == null)
                                 Debug.Warning("Type not finded");
                             else
@@ -155,7 +156,7 @@ internal class Program
                         if (args.Length < 3)
                             Debug.Warning("Minimal args count is 2!");
 
-                        var full = StringHelper.PathFromArgs(args, 1);
+                        //var full = StringHelper.PathFromArgs(args, 1);
 
                         if (currentTypes == null || currentTypes.Length == 0)
                         {
@@ -164,13 +165,13 @@ internal class Program
                         }
                         if (args[1] == "-name")
                         {
-                            currentMethod = currentTypes.First().Methods.First(s => s.Name == full);
+                            currentMethod = currentTypes.First().Methods.FirstOrDefault(s => s.Name == args[2]);
                             if (currentMethod == null)
                                 Debug.Warning("Method not finded");
                         }
                         else if (args[1] == "-type")
                         {
-                            currentMethod = currentTypes.First().Methods.Where(s => s.ReturnType.ToString() == full).FirstOrDefault();
+                            currentMethod = currentTypes.First().Methods.Where(s => s.ReturnType.ToString() == args[2]).FirstOrDefault();
                             if (currentMethod == null)
                                 Debug.Warning("Method not finded");
                         }
@@ -247,6 +248,40 @@ internal class Program
                                 foreach (var method in currentTypes.First().Methods)
                                 {
                                     DllReader.ReadMethod(CecilConverter.ToDto(method));
+                                }
+                            }
+                            else if (args[2] == "-edit")
+                            {
+                                try
+                                {
+                                    string dat = await TextEditor.Edit(await DllReader.ReadInstructions(currentMethod));
+                                    if (dat == "")
+                                    {
+                                        Debug.Warning("No instructions found or empty data");
+                                        continue;
+                                    }
+
+                                    string[] lines = dat.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                                    Instruction[] instrs = new Instruction[lines.Length];
+                                    for (int i = 0; i < lines.Length; i++)
+                                    {
+                                        instrs[i] = StringHelper.ParseInstruction(lines[i], currentMethod.Module);
+                                    }
+
+                                    currentMethod.Body.Instructions.Clear();
+                                    MethodDefinition m = currentDll.Asm.MainModule.Types.FirstOrDefault(t => t.FullName == currentMethod.DeclaringType.FullName).Methods.FirstOrDefault(m => m.Name == currentMethod.Name);
+                                    m.Body.Instructions.Clear();
+
+                                    foreach (var instr in instrs)
+                                    {
+                                        currentMethod.Body.Instructions.Add(instr);
+                                        m.Body.Instructions.Add(instr);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Debug.Error(ex);
+                                    continue;
                                 }
                             }
                         }
