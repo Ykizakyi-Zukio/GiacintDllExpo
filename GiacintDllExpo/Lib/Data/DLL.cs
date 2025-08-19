@@ -1,11 +1,15 @@
 ﻿using System.Reflection;
 using Mono.Cecil;
+using Newtonsoft.Json;
 
 namespace GiacintDllExpo.Lib.Data
 {
     internal struct DLL
     {
-        public AssemblyDefinition Asm;
+        [JsonIgnore]
+        internal AssemblyDefinition Asm;
+        public readonly AssemblyDto AssemblyDto => CecilConverter.ToDto(Asm);
+
         public string Name;
         public string FullName;
         public string Version;
@@ -13,10 +17,10 @@ namespace GiacintDllExpo.Lib.Data
         public string? Cert;
         public string? PublicKeyToken;
 
-        public ModuleDefinition[]? Modules;
-        public Resource[]? Resources;
+        //public ModuleDefinition[]? Modules;
+        //public Resource[]? Resources;
 
-        public TypeDefinition[]? Types;
+        //public TypeDefinition[]? Types;
 
         public DLL(AssemblyDefinition asm, string name, string version, string path, string cert)
         {
@@ -39,9 +43,9 @@ namespace GiacintDllExpo.Lib.Data
             dll.Path = path;
             dll.PublicKeyToken = BitConverter.ToString(assembly.Name.PublicKeyToken).Replace("-", "").ToLower();
 
-            dll.Modules = assembly.Modules.ToArray();
-            dll.Resources = assembly.MainModule.Resources.ToArray();
-            dll.Types = assembly.MainModule.Types.ToArray();
+            //dll.Modules = assembly.Modules.ToArray();
+            //dll.Resources = assembly.MainModule.Resources.ToArray();
+            //dll.Types = assembly.MainModule.Types.ToArray();
 
             return dll;
         }

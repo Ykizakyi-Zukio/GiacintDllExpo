@@ -17,5 +17,15 @@
 
             return path.Trim('\"', ' ');
         }
+
+        internal static string AddTabs(string str, int tabCount = 1)
+        {
+            if (string.IsNullOrEmpty(str))
+            {
+                return str;
+            }
+            string tabs = new string('\t', tabCount);
+            return str.Replace("\r\n", $"\r\n{tabs}").Replace("\n", $"\n{tabs}").Insert(0, tabs);
+        }
     }
 }
