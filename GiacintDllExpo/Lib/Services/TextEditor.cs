@@ -8,7 +8,7 @@ internal class TextEditor
 {
     private static bool isOpened = false;
 
-    internal async static Task<string> Edit(string text)
+    internal static string Edit(string text)
     {
         if (isOpened)
         {
@@ -26,7 +26,6 @@ internal class TextEditor
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 psi = new ProcessStartInfo("notepad.exe", $"\"{tempFile}\"");
-
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 psi = new ProcessStartInfo("xdg-open", $"\"{tempFile}\"");
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
@@ -36,15 +35,12 @@ internal class TextEditor
 
             psi.UseShellExecute = true;
 
-            _ = Task.Run(() =>
-            {
-                using (var proc = Process.Start(psi))
+            using (var proc = Process.Start(psi))
                 {
                     proc.WaitForExit();
                 }
-            });
 
-            string result = await File.ReadAllTextAsync(tempFile);
+            string result = File.ReadAllText(tempFile);
             File.Delete(tempFile);
 
             isOpened = false;

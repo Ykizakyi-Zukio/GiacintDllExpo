@@ -4,6 +4,8 @@ using GiacintDllExpo.Lib.Data;
 using GiacintDllExpo.Lib.Services;
 using Newtonsoft.Json;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
+using System.Xml.Linq;
 
 namespace GiacintDllExpo;
 
@@ -253,20 +255,13 @@ internal class Program
                             else if (args[2] == "-edit")
                             {
                                 try
-                                {
-                                    string dat = await TextEditor.Edit(await DllReader.ReadInstructions(currentMethod));
-                                    if (dat == "")
-                                    {
-                                        Debug.Warning("No instructions found or empty data");
-                                        continue;
-                                    }
+                                {   
+                                    CancellationTokenSource cts = new CancellationTokenSource();
+                                    string dat = TextEditor.Edit(await DllReader.ReadInstructions(currentMethod));
 
                                     string[] lines = dat.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                                    Instruction[] instrs = new Instruction[lines.Length];
-                                    for (int i = 0; i < lines.Length; i++)
-                                    {
-                                        instrs[i] = StringHelper.ParseInstruction(lines[i], currentMethod.Module);
-                                    }
+                                    List<Instruction> instrs = [];
+                                    instrs = IlParser.ParseIL(lines, currentMethod.Module);
 
                                     currentMethod.Body.Instructions.Clear();
                                     MethodDefinition m = currentDll.Asm.MainModule.Types.FirstOrDefault(t => t.FullName == currentMethod.DeclaringType.FullName).Methods.FirstOrDefault(m => m.Name == currentMethod.Name);
@@ -308,6 +303,12 @@ internal class Program
                     case "--exit":
                     case "-e":
                         Environment.Exit(0);
+                        break;
+                    case "-test":
+                        string str = "Hello";
+                        str = TextEditor.Edit("Hello");
+                        
+                        Debug.Info($"Edited text: {str}");
                         break;
                     default:
                         Debug.Warning($"Unknown command: {args[0]}");
